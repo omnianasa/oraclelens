@@ -38,6 +38,16 @@ class TerminalUI:
             ("query SELECT ...", "Execute a read query"),
             ("clear", "Clear the terminal"),
             ("exit", "Exit OracleLens"),
+
+            ("sequences [search]", "List sequences"),
+            ("sequence-info NAME", "Show sequence properties"),
+            ("users [search]", "List database users"),
+            ("user-info NAME", "Show account information"),
+            ("user-roles NAME", "Show granted roles"),
+            ("user-privileges NAME", "Show system privileges"),
+            ("constraints TABLE", "Show table constraints"),
+            ("view-definition VIEW", "Show view SQL definition"),
+
         ]
 
         table = Table(title="Available Commands")

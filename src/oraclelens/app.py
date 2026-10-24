@@ -93,3 +93,54 @@ class OracleLensApplication:
     def run_query(self, sql: str) -> None:
         records = self.repository.execute_read_query(sql)
         self.ui.show_records(records, "Query Results")
+
+    
+    def list_sequences(self, search: str = "") -> None:
+        records = self.explorer.list_sequences(search)
+        self.ui.show_records(records, "Sequences")
+
+    def list_users(self, search: str = "") -> None:
+        records = self.explorer.list_users(search)
+        self.ui.show_records(records, "Database Users")
+
+    def show_constraints(self, table_name: str) -> None:
+        records = self.explorer.constraints(table_name)
+        self.ui.show_records(
+            records,
+            f"Constraints: {table_name}",
+        )
+
+    def show_view_definition(self, view_name: str) -> None:
+        result = self.explorer.view_definition(view_name)
+        definition = result.get("text")
+
+        if definition is None:
+            self.ui.info("No view definition returned.")
+            return
+
+        self.ui.console.print(
+            f"[bold cyan]View: {view_name}[/bold cyan]"
+        )
+        self.ui.console.print(str(definition))
+
+    def show_sequence_metadata(self, sequence_name: str) -> None:
+        result = self.explorer.sequence_metadata(sequence_name)
+        self.ui.show_records(
+            [result],
+            f"Sequence: {sequence_name}",
+        )
+
+    def show_user_info(self, username: str) -> None:
+        result = self.explorer.user_info(username)
+        self.ui.show_records([result], f"User: {username}")
+
+    def show_user_roles(self, username: str) -> None:
+        records = self.explorer.user_roles(username)
+        self.ui.show_records(records, f"Roles: {username}")
+
+    def show_user_privileges(self, username: str) -> None:
+        records = self.explorer.user_privileges(username)
+        self.ui.show_records(
+            records,
+            f"System Privileges: {username}",
+        )

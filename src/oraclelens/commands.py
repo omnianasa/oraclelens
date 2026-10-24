@@ -62,15 +62,51 @@ class CommandRouter:
             elif command in {"exit", "quit"}:
                 return False
 
+            
+            elif command == "sequences":
+                self.app.list_sequences(self._search(values))
+
+            elif command == "users":
+                self.app.list_users(self._search(values))
+
+            elif command == "constraints":
+                self._require_count(values, 1)
+                self.app.show_constraints(values[0])
+
+            elif command == "view-definition":
+                self._require_count(values, 1)
+                self.app.show_view_definition(values[0])
+
+            elif command == "sequence-info":
+                self._require_count(values, 1)
+                self.app.show_sequence_metadata(values[0])
+
+            elif command == "user-info":
+                self._require_count(values, 1)
+                self.app.show_user_info(values[0])
+
+            elif command == "user-roles":
+                self._require_count(values, 1)
+                self.app.show_user_roles(values[0])
+
+            elif command == "user-privileges":
+                self._require_count(values, 1)
+                self.app.show_user_privileges(values[0])
+
             else:
                 self.app.ui.error(
                     f"Unknown command: {command}. Type 'help'."
                 )
 
-        except (ValueError, KeyError) as exc:
+        
+        except (ValueError, KeyError, PermissionError) as exc:
             self.app.ui.error(str(exc))
 
+        except Exception as exc:
+            self.app.ui.error(f"Command failed: {exc}")
+
         return True
+
 
     @staticmethod
     def _require_count(values: list[str], count: int) -> None:

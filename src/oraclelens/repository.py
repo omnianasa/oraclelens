@@ -129,6 +129,215 @@ class OracleRepository:
             sql,
             {"table_name": table_name},
         )
+    
+    def list_sequences(self, search: str = "") -> list[dict]:
+        sql = """
+            SELECT sequence_name
+            FROM user_sequences
+            WHERE UPPER(sequence_name) LIKE :search
+            ORDER BY sequence_name
+        """
+        return self._fetch_all(
+            sql,
+            {"search": f"%{search.upper()}%"},
+        )
+
+    def list_users(self, search: str = "") -> list[dict]:
+        sql = """
+            SELECT username, user_id, created
+            FROM all_users
+            WHERE UPPER(username) LIKE :search
+            ORDER BY username
+        """
+        return self._fetch_all(
+            sql,
+            {"search": f"%{search.upper()}%"},
+        )
+
+    def list_constraints(self, table_name: str) -> list[dict]:
+        table_name = validate_identifier(table_name)
+
+        sql = """
+            SELECT
+                c.constraint_name,
+                c.constraint_type,
+                c.status,
+                cc.column_name,
+                cc.position
+            FROM user_constraints c
+            LEFT JOIN user_cons_columns cc
+              ON cc.constraint_name = c.constraint_name
+             AND cc.table_name = c.table_name
+            WHERE c.table_name = :table_name
+            ORDER BY c.constraint_name, cc.position
+        """
+        return self._fetch_all(
+            sql,
+            {"table_name": table_name},
+        )
+
+    def get_view_definition(self, view_name: str) -> dict:
+        view_name = validate_identifier(view_name)
+
+        sql = """
+            SELECT view_name, text
+            FROM user_views
+            WHERE view_name = :view_name
+        """
+        result = self._fetch_one(
+            sql,
+            {"view_name": view_name},
+        )
+
+        if result is None:
+            raise ValueError(f"View not found: {view_name}")
+
+        return result
+
+    def get_sequence_metadata(self, sequence_name: str) -> dict:
+        sequence_name = validate_identifier(sequence_name)
+
+        sql = """
+            SELECT
+                sequence_name,
+                min_value,
+                max_value,
+                increment_by,
+                cycle_flag,
+                order_flag,
+                cache_size,
+                last_number
+            FROM user_sequences
+            WHERE sequence_name = :sequence_name
+        """
+        result = self._fetch_one(
+            sql,
+            {"sequence_name": sequence_name},
+        )
+
+        if result is None:
+            raise ValueError(
+                f"Sequence not found: {sequence_name}"
+            )
+
+        return result
+
+    def get_user_account_info(self, username: str) -> dict:
+        username = validate_identifier(username)
+
+        current_user = self._fetch_one(
+            "SELECT USER AS username FROM dual"
+        )["username"]
+
+        if username == current_user:
+            sql = """
+                SELECT
+                    username,
+                    account_status,
+                    created,
+                    default_tablespace,
+                    temporary_tablespace
+                FROM user_users
+            """
+            result = self._fetch_one(sql)
+
+        else:
+            # DBA_USERS requires suitable privileges.
+            # We do not attempt to bypass those privileges.
+            sql = """
+                SELECT
+                    username,
+                    account_status,
+                    created,
+                    default_tablespace,
+                    temporary_tablespace
+                FROM dba_users
+                WHERE username = :username
+            """
+            try:
+                result = self._fetch_one(
+                    sql,
+                    {"username": username},
+                )
+            except Exception as exc:
+                raise PermissionError(
+                    "Account details for other users require "
+                    "access to DBA_USERS. Ask your DBA for "
+                    "appropriate read-only access."
+                ) from exc
+
+        if result is None:
+            raise ValueError(f"User not found: {username}")
+
+        return result
+
+    def list_user_roles(self, username: str) -> list[dict]:
+        username = validate_identifier(username)
+
+        current_user = self._fetch_one(
+            "SELECT USER AS username FROM dual"
+        )["username"]
+
+        if username == current_user:
+            sql = """
+                SELECT granted_role, admin_option, default_role
+                FROM user_role_privs
+                ORDER BY granted_role
+            """
+            return self._fetch_all(sql)
+
+        sql = """
+            SELECT granted_role, admin_option, default_role
+            FROM dba_role_privs
+            WHERE grantee = :username
+            ORDER BY granted_role
+        """
+        try:
+            return self._fetch_all(
+                sql,
+                {"username": username},
+            )
+        except Exception as exc:
+            raise PermissionError(
+                "Roles for other users require access to "
+                "DBA_ROLE_PRIVS."
+            ) from exc
+
+    def list_user_system_privileges(
+        self,
+        username: str,
+     ) -> list[dict]:
+        username = validate_identifier(username)
+
+        current_user = self._fetch_one(
+            "SELECT USER AS username FROM dual"
+        )["username"]
+
+        if username == current_user:
+            sql = """
+                SELECT privilege, admin_option
+                FROM user_sys_privs
+                ORDER BY privilege
+            """
+            return self._fetch_all(sql)
+
+        sql = """
+            SELECT privilege, admin_option
+            FROM dba_sys_privs
+            WHERE grantee = :username
+            ORDER BY privilege
+        """
+        try:
+            return self._fetch_all(
+                sql,
+                {"username": username},
+            )
+        except Exception as exc:
+            raise PermissionError(
+                "System privileges for other users require "
+                "access to DBA_SYS_PRIVS."
+            ) from exc
+
 
     def show_table(
         self,
