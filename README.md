@@ -70,26 +70,23 @@ If the connection succeeds, OracleLens displays its interactive prompt.
 
 | Command | Description |
 |---|---|
-| `help` | Display available commands |
-| `status` | Check the database connection |
-| `tables` | List accessible tables |
-| `tables CITY` | Filter tables by name |
-| `views` | List accessible views |
-| `views REPORT` | Filter views by name |
-| `describe CITY` | Inspect table columns |
-| `relations CITY` | Show foreign-key relationships |
-| `indexes CITY` | Display table indexes |
-| `constraints CITY` | Display table constraints |
-| `show CITY` | Browse table records |
-| `show CITY --limit 5 --page 1` | Display a specific page of records |
-| `query SELECT COUNT(*) FROM CITY` | Execute a custom read query |
-| `sequences` | List accessible sequences |
-| `sequence-info OL_TEST_SEQ` | Inspect a sequence |
-| `users` | List accessible database users |
-| `user-info SHEET26` | Display account information |
-| `user-roles SHEET26` | Display granted roles |
-| `user-privileges SHEET26` | Display system privileges |
-| `view-definition OL_CITY_VIEW` | Display a view definition |
+| `help` | Show available commands |
+| `status` | Test the database connection |
+| `tables [search]` | List tables, optionally filtered |
+| `views [search]` | List views, optionally filtered |
+| `describe TABLE` | Show column information |
+| `relations TABLE` | Show foreign-key relationships |
+| `indexes TABLE` | Show indexes and indexed columns |
+| `show TABLE [--limit N] [--page N]` | Browse table rows with pagination |
+| `query SELECT ...` | Execute a read-only SQL query |
+| `sequences [search]` | List sequences, optionally filtered |
+| `sequence-info NAME` | Show sequence properties |
+| `users [search]` | List database users, optionally filtered |
+| `user-info NAME` | Show account information |
+| `user-roles NAME` | Show roles granted to a user |
+| `user-privileges NAME` | Show system privileges granted to a user |
+| `constraints TABLE` | Show table constraints |
+| `view-definition VIEW` | Show a view's SQL definition |
 | `clear` | Clear the terminal |
 | `exit` | Exit OracleLens |
 
