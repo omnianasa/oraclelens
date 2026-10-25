@@ -9,20 +9,28 @@ from oraclelens.ui import TerminalUI
 class OracleLensApplication:
     def __init__(self):
         self.ui = TerminalUI()
-        self.config = OracleLensConfig.from_env()
-        self.connection_manager = OracleConnectionManager(
-            self.config
-        )
-
+        self.config = None
+        self.connection_manager = None
         self.repository = None
         self.explorer = None
+
         self.router = CommandRouter(self)
 
     def run(self) -> None:
         self.ui.welcome()
 
         try:
+            # Ask the user for database credentials.
+            self.config = OracleLensConfig.from_prompt()
+
+            # Create the connection manager using the entered credentials.
+            self.connection_manager = OracleConnectionManager(
+                self.config
+            )
+
+            # Connect to Oracle Database.
             connection = self.connection_manager.connect()
+
             self.repository = OracleRepository(connection)
             self.explorer = SchemaExplorer(self.repository)
 
@@ -31,14 +39,16 @@ class OracleLensApplication:
 
             self._command_loop()
 
+        except KeyboardInterrupt:
+            self.ui.info("\nConnection setup cancelled.")
+
         except Exception as exc:
-            self.ui.error(
-                f"Could not start OracleLens: {exc}"
-            )
+            self.ui.error(f"Could not start OracleLens: {exc}")
 
         finally:
-            self.connection_manager.close()
-            self.ui.info("Database connection closed.")
+            if self.connection_manager is not None:
+                self.connection_manager.close()
+                self.ui.info("Database connection closed.")
 
     def _command_loop(self) -> None:
         while True:
@@ -50,6 +60,7 @@ class OracleLensApplication:
 
             except KeyboardInterrupt:
                 self.ui.info("\nUse 'exit' to quit.")
+
             except EOFError:
                 break
 
@@ -94,7 +105,6 @@ class OracleLensApplication:
         records = self.repository.execute_read_query(sql)
         self.ui.show_records(records, "Query Results")
 
-    
     def list_sequences(self, search: str = "") -> None:
         records = self.explorer.list_sequences(search)
         self.ui.show_records(records, "Sequences")
