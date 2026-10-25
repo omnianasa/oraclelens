@@ -9,13 +9,13 @@ class OracleLensConfig:
     password: str
     dsn: str
 
-    @classmethod
-    def from_env(cls) -> "OracleLensConfig":
-        return cls(
-            user=os.getenv("ORACLE_USER", "").strip(),
-            password=os.getenv("ORACLE_PASSWORD", ""),
-            dsn=os.getenv("ORACLE_DSN", "").strip(),
-        )
+    # @classmethod
+    # def from_env(cls) -> "OracleLensConfig":
+    #     return cls(
+    #         user=os.getenv("ORACLE_USER", "").strip(),
+    #         password=os.getenv("ORACLE_PASSWORD", ""),
+    #         dsn=os.getenv("ORACLE_DSN", "").strip(),
+    #     )
 
     @classmethod
     def from_prompt(cls) -> "OracleLensConfig":
